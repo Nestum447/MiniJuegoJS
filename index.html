@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Juego Avanzado</title>
+  <title>Mini Juego Avanzado - Velocidad Ajustable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { 
@@ -39,7 +39,7 @@
   </style>
 </head>
 <body>
-  <h2 style="color:white;">🎮 Mini Juego Avanzado</h2>
+  <h2 style="color:white;">🎮 Mini Juego Avanzado - DeltaTime</h2>
   <canvas id="gameCanvas" width="500" height="500"></canvas>
 
   <!-- Joystick Virtual -->
@@ -52,7 +52,7 @@
     const ctx = canvas.getContext("2d");
 
     // Jugador
-    const jugador = { x: 200, y: 200, size: 50, velocidad: 3 };
+    const jugador = { x: 200, y: 200, size: 50, velocidad: 180 }; // velocidad en px/seg
     let colorJugador = 0;
 
     // Obstáculos
@@ -64,8 +64,8 @@
 
     // Enemigos
     const enemigos = [
-      { x: 50, y: 50, size: 40, velocidad: 2, dirX: 1, dirY: 1 },
-      { x: 400, y: 150, size: 50, velocidad: 1.5, dirX: -1, dirY: 1 }
+      { x: 50, y: 50, size: 40, velocidad: 100, dirX: 1, dirY: 1 },
+      { x: 400, y: 150, size: 50, velocidad: 80, dirX: -1, dirY: 1 }
     ];
 
     // Puntos
@@ -118,38 +118,43 @@
       );
     }
 
-    function gameLoop() {
+    let ultimoTiempo = null;
+    function gameLoop(tiempoActual) {
+      if (!ultimoTiempo) ultimoTiempo = tiempoActual;
+      const deltaTime = (tiempoActual - ultimoTiempo) / 1000; // en segundos
+      ultimoTiempo = tiempoActual;
+
       // Movimiento jugador
       const jugadorTemp = { ...jugador };
-      jugadorTemp.x += dirX * jugador.velocidad;
-      jugadorTemp.y += dirY * jugador.velocidad;
+      jugadorTemp.x += dirX * jugador.velocidad * deltaTime;
+      jugadorTemp.y += dirY * jugador.velocidad * deltaTime;
 
       let chocó = false;
       obstaculos.forEach(o => { if (colision(jugadorTemp, o)) chocó = true; });
       if (!chocó) { jugador.x = jugadorTemp.x; jugador.y = jugadorTemp.y; }
 
-      // Limites
+      // Límites
       if (jugador.x < 0) jugador.x = 0;
       if (jugador.x > canvas.width - jugador.size) jugador.x = canvas.width - jugador.size;
       if (jugador.y < 0) jugador.y = 0;
       if (jugador.y > canvas.height - jugador.size) jugador.y = canvas.height - jugador.size;
 
       // Animación jugador
-      colorJugador += 0.05;
+      colorJugador += deltaTime * 5;
       const r = Math.floor(100 + 155 * Math.abs(Math.sin(colorJugador)));
 
       // Movimiento enemigos
       enemigos.forEach(e => {
-        e.x += e.dirX * e.velocidad;
-        e.y += e.dirY * e.velocidad;
+        e.x += e.dirX * e.velocidad * deltaTime;
+        e.y += e.dirY * e.velocidad * deltaTime;
         if (e.x < 0 || e.x > canvas.width - e.size) e.dirX *= -1;
         if (e.y < 0 || e.y > canvas.height - e.size) e.dirY *= -1;
-        if (colision(jugador, e)) { puntos = 0; nivel = 1; } // toca enemigo -> reinicia puntos
+        if (colision(jugador, e)) { puntos = 0; nivel = 1; }
       });
 
-      // Incrementar puntos con movimiento
-      puntos += 0.01;
-      if (puntos >= nivel * 20) nivel++; // sube nivel cada 20 puntos
+      // Puntaje y niveles
+      puntos += deltaTime * 5; // acumula puntos más rápido
+      if (puntos >= nivel * 20) nivel++;
 
       // Dibujar
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -175,7 +180,7 @@
       requestAnimationFrame(gameLoop);
     }
 
-    gameLoop();
+    requestAnimationFrame(gameLoop);
   </script>
 </body>
 </html>
