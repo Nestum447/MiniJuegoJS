@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Juego Avanzado - Velocidad Ajustable</title>
+  <title>Mini Juego Avanzado - Con Sonidos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { 
@@ -39,7 +39,7 @@
   </style>
 </head>
 <body>
-  <h2 style="color:white;">🎮 Mini Juego Avanzado - DeltaTime</h2>
+  <h2 style="color:white;">🎮 Mini Juego Avanzado - Con Sonidos</h2>
   <canvas id="gameCanvas" width="500" height="500"></canvas>
 
   <!-- Joystick Virtual -->
@@ -52,7 +52,7 @@
     const ctx = canvas.getContext("2d");
 
     // Jugador
-    const jugador = { x: 200, y: 200, size: 50, velocidad: 180 }; // velocidad en px/seg
+    const jugador = { x: 200, y: 200, size: 50, velocidad: 180 };
     let colorJugador = 0;
 
     // Obstáculos
@@ -68,9 +68,18 @@
       { x: 400, y: 150, size: 50, velocidad: 80, dirX: -1, dirY: 1 }
     ];
 
-    // Puntos
+    // Puntos y niveles
     let puntos = 0;
     let nivel = 1;
+
+    // Sonidos
+    const sonidoFondo = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"); // fondo
+    sonidoFondo.loop = true;
+    sonidoFondo.volume = 0.2;
+    sonidoFondo.play().catch(() => {}); // evitar bloqueo autoplay en móviles
+
+    const sonidoPerder = new Audio("https://www.soundjay.com/button/beep-07.mp3"); // al tocar enemigo
+    sonidoPerder.volume = 0.5;
 
     // Joystick
     const joystick = document.getElementById("joystick");
@@ -80,19 +89,9 @@
     let dirX = 0, dirY = 0;
 
     // Eventos joystick
-    joystick.addEventListener("touchstart", (e) => {
-      dragging = true;
-      moverStick(e.touches[0]);
-    });
-    joystick.addEventListener("touchmove", (e) => {
-      if (dragging) moverStick(e.touches[0]);
-    });
-    joystick.addEventListener("touchend", () => {
-      dragging = false;
-      dirX = 0; dirY = 0;
-      stick.style.left = "35px";
-      stick.style.top = "35px";
-    });
+    joystick.addEventListener("touchstart", (e) => { dragging = true; moverStick(e.touches[0]); });
+    joystick.addEventListener("touchmove", (e) => { if (dragging) moverStick(e.touches[0]); });
+    joystick.addEventListener("touchend", () => { dragging = false; dirX = 0; dirY = 0; stick.style.left = "35px"; stick.style.top = "35px"; });
 
     function moverStick(touch) {
       const rect = joystick.getBoundingClientRect();
@@ -108,20 +107,15 @@
       dirY = dy / 40;
     }
 
-    // Colisión jugador-obstáculo
+    // Colisión
     function colision(j, o) {
-      return !(
-        j.x + j.size < o.x ||
-        j.x > o.x + o.width ||
-        j.y + j.size < o.y ||
-        j.y > o.y + o.height
-      );
+      return !(j.x + j.size < o.x || j.x > o.x + o.width || j.y + j.size < o.y || j.y > o.y + o.height);
     }
 
     let ultimoTiempo = null;
     function gameLoop(tiempoActual) {
       if (!ultimoTiempo) ultimoTiempo = tiempoActual;
-      const deltaTime = (tiempoActual - ultimoTiempo) / 1000; // en segundos
+      const deltaTime = (tiempoActual - ultimoTiempo) / 1000;
       ultimoTiempo = tiempoActual;
 
       // Movimiento jugador
@@ -149,11 +143,15 @@
         e.y += e.dirY * e.velocidad * deltaTime;
         if (e.x < 0 || e.x > canvas.width - e.size) e.dirX *= -1;
         if (e.y < 0 || e.y > canvas.height - e.size) e.dirY *= -1;
-        if (colision(jugador, e)) { puntos = 0; nivel = 1; }
+        if (colision(jugador, e)) { 
+          puntos = 0; 
+          nivel = 1; 
+          sonidoPerder.play().catch(()=>{}); 
+        }
       });
 
       // Puntaje y niveles
-      puntos += deltaTime * 5; // acumula puntos más rápido
+      puntos += deltaTime * 5;
       if (puntos >= nivel * 20) nivel++;
 
       // Dibujar
