@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Juego - Mover el cuadrado</title>
-  <!-- 🚫 Evita zoom con doble tap o pellizco -->
+  <title>Mini Juego con Joystick Virtual</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { 
@@ -12,81 +11,99 @@
       flex-direction: column; 
       align-items: center; 
       background: black;
-      touch-action: manipulation;  /* 🚫 evita gestos como zoom */
-      overscroll-behavior: contain; /* 🚫 evita que se desplace la página */
-      user-select: none;            /* 🚫 evita selección de texto */
-    }
-    canvas { background: #111; margin-top: 10px; }
-    .controles {
-      margin-top: 15px;
-      display: grid;
-      grid-template-columns: 80px 80px 80px;
-      gap: 10px;
-      justify-content: center;
-    }
-    .btn {
-      background: #444;
-      color: white;
-      font-size: 20px;
-      border: none;
-      border-radius: 10px;
-      padding: 15px;
-      text-align: center;
+      touch-action: manipulation;
+      overscroll-behavior: contain;
       user-select: none;
     }
-    .btn:active { background: #666; }
+    canvas { background: #111; margin-top: 10px; }
+    /* Joystick */
+    #joystick {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      width: 120px;
+      height: 120px;
+      background: rgba(200, 200, 200, 0.2);
+      border-radius: 50%;
+      touch-action: none;
+    }
+    #stick {
+      position: absolute;
+      left: 35px;
+      top: 35px;
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 0, 255, 0.7);
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
-  <h2 style="color:white;">🎮 Mini Juego</h2>
+  <h2 style="color:white;">🎮 Mini Juego con Joystick</h2>
   <canvas id="gameCanvas" width="500" height="500"></canvas>
 
-  <!-- Botones táctiles -->
-  <div class="controles">
-    <div></div>
-    <button class="btn" id="up">⬆️</button>
-    <div></div>
-    <button class="btn" id="left">⬅️</button>
-    <div></div>
-    <button class="btn" id="right">➡️</button>
-    <div></div>
-    <button class="btn" id="down">⬇️</button>
-    <div></div>
+  <!-- Joystick Virtual -->
+  <div id="joystick">
+    <div id="stick"></div>
   </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    const jugador = { x: 200, y: 200, size: 50, velocidad: 5 };
-    const teclas = {};
+    const jugador = { x: 200, y: 200, size: 50, velocidad: 3 };
 
-    // Controles con teclado (PC)
-    document.addEventListener("keydown", (e) => teclas[e.key] = true);
-    document.addEventListener("keyup", (e) => teclas[e.key] = false);
+    // Variables joystick
+    const joystick = document.getElementById("joystick");
+    const stick = document.getElementById("stick");
+    const center = { x: 60, y: 60 }; // centro del joystick
+    let dragging = false;
+    let dirX = 0, dirY = 0;
 
-    // Controles táctiles (móvil)
-    function activarTecla(tecla) { teclas[tecla] = true; }
-    function soltarTecla(tecla) { teclas[tecla] = false; }
+    // Eventos táctiles
+    joystick.addEventListener("touchstart", (e) => {
+      dragging = true;
+      moverStick(e.touches[0]);
+    });
 
-    document.getElementById("up").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowUp"); });
-    document.getElementById("up").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowUp"); });
+    joystick.addEventListener("touchmove", (e) => {
+      if (dragging) moverStick(e.touches[0]);
+    });
 
-    document.getElementById("down").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowDown"); });
-    document.getElementById("down").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowDown"); });
+    joystick.addEventListener("touchend", () => {
+      dragging = false;
+      dirX = 0; dirY = 0;
+      stick.style.left = "35px";
+      stick.style.top = "35px";
+    });
 
-    document.getElementById("left").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowLeft"); });
-    document.getElementById("left").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowLeft"); });
+    function moverStick(touch) {
+      const rect = joystick.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
 
-    document.getElementById("right").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowRight"); });
-    document.getElementById("right").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowRight"); });
+      // Vector desde el centro
+      let dx = x - center.x;
+      let dy = y - center.y;
+      const distancia = Math.sqrt(dx*dx + dy*dy);
 
+      // Normalizar movimiento
+      if (distancia > 40) {
+        dx = (dx / distancia) * 40;
+        dy = (dy / distancia) * 40;
+      }
+
+      stick.style.left = (center.x - 25 + dx) + "px";
+      stick.style.top = (center.y - 25 + dy) + "px";
+
+      dirX = dx / 40;
+      dirY = dy / 40;
+    }
+
+    // Game loop
     function gameLoop() {
-      // Movimiento
-      if (teclas["ArrowLeft"]) jugador.x -= jugador.velocidad;
-      if (teclas["ArrowRight"]) jugador.x += jugador.velocidad;
-      if (teclas["ArrowUp"]) jugador.y -= jugador.velocidad;
-      if (teclas["ArrowDown"]) jugador.y += jugador.velocidad;
+      jugador.x += dirX * jugador.velocidad;
+      jugador.y += dirY * jugador.velocidad;
 
       // Límites
       if (jugador.x < 0) jugador.x = 0;
