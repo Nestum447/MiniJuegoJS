@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Mini Juego - Mover el cuadrado</title>
+  <!-- 🚫 Evita zoom con doble tap o pellizco -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body { margin: 0; display: flex; flex-direction: column; align-items: center; background: black; }
+    body { 
+      margin: 0; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      background: black;
+      touch-action: manipulation;  /* 🚫 evita gestos como zoom */
+      overscroll-behavior: contain; /* 🚫 evita que se desplace la página */
+      user-select: none;            /* 🚫 evita selección de texto */
+    }
     canvas { background: #111; margin-top: 10px; }
     .controles {
       margin-top: 15px;
@@ -58,17 +69,17 @@
     function activarTecla(tecla) { teclas[tecla] = true; }
     function soltarTecla(tecla) { teclas[tecla] = false; }
 
-    document.getElementById("up").addEventListener("touchstart", () => activarTecla("ArrowUp"));
-    document.getElementById("up").addEventListener("touchend", () => soltarTecla("ArrowUp"));
+    document.getElementById("up").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowUp"); });
+    document.getElementById("up").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowUp"); });
 
-    document.getElementById("down").addEventListener("touchstart", () => activarTecla("ArrowDown"));
-    document.getElementById("down").addEventListener("touchend", () => soltarTecla("ArrowDown"));
+    document.getElementById("down").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowDown"); });
+    document.getElementById("down").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowDown"); });
 
-    document.getElementById("left").addEventListener("touchstart", () => activarTecla("ArrowLeft"));
-    document.getElementById("left").addEventListener("touchend", () => soltarTecla("ArrowLeft"));
+    document.getElementById("left").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowLeft"); });
+    document.getElementById("left").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowLeft"); });
 
-    document.getElementById("right").addEventListener("touchstart", () => activarTecla("ArrowRight"));
-    document.getElementById("right").addEventListener("touchend", () => soltarTecla("ArrowRight"));
+    document.getElementById("right").addEventListener("touchstart", (e) => { e.preventDefault(); activarTecla("ArrowRight"); });
+    document.getElementById("right").addEventListener("touchend", (e) => { e.preventDefault(); soltarTecla("ArrowRight"); });
 
     function gameLoop() {
       // Movimiento
