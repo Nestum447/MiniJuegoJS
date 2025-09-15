@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Juego - Mover el cuadrado</title>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: black; }
+    canvas { background: #111; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Propiedades del jugador
+    const jugador = { x: 200, y: 200, size: 50, velocidad: 5 };
+    const teclas = {};
+
+    // Detectar teclas presionadas y soltadas
+    document.addEventListener("keydown", (e) => teclas[e.key] = true);
+    document.addEventListener("keyup", (e) => teclas[e.key] = false);
+
+    function gameLoop() {
+      // 1. Lógica de movimiento
+      if (teclas["ArrowLeft"]) jugador.x -= jugador.velocidad;
+      if (teclas["ArrowRight"]) jugador.x += jugador.velocidad;
+      if (teclas["ArrowUp"]) jugador.y -= jugador.velocidad;
+      if (teclas["ArrowDown"]) jugador.y += jugador.velocidad;
+
+      // Evitar que salga del canvas
+      if (jugador.x < 0) jugador.x = 0;
+      if (jugador.x > canvas.width - jugador.size) jugador.x = canvas.width - jugador.size;
+      if (jugador.y < 0) jugador.y = 0;
+      if (jugador.y > canvas.height - jugador.size) jugador.y = canvas.height - jugador.size;
+
+      // 2. Dibujar
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // limpiar
+      ctx.fillStyle = "blue";
+      ctx.fillRect(jugador.x, jugador.y, jugador.size, jugador.size);
+
+      requestAnimationFrame(gameLoop); // volver a ejecutar
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
