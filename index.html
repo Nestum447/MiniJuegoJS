@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Juego Avanzado - Con Sonidos</title>
+  <title>Mini Juego Avanzado - Funcional</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { 
@@ -39,10 +39,9 @@
   </style>
 </head>
 <body>
-  <h2 style="color:white;">🎮 Mini Juego Avanzado - Con Sonidos</h2>
+  <h2 style="color:white;">🎮 Mini Juego Avanzado - Funcional</h2>
   <canvas id="gameCanvas" width="500" height="500"></canvas>
 
-  <!-- Joystick Virtual -->
   <div id="joystick">
     <div id="stick"></div>
   </div>
@@ -88,21 +87,12 @@
       }
     }
 
-    canvas.addEventListener("touchstart", iniciarAudio);
-    joystick.addEventListener("touchstart", iniciarAudio);
-    canvas.addEventListener("mousedown", iniciarAudio);
-
     // Joystick
     const joystick = document.getElementById("joystick");
     const stick = document.getElementById("stick");
     const center = { x: 60, y: 60 };
     let dragging = false;
     let dirX = 0, dirY = 0;
-
-    // Eventos joystick
-    joystick.addEventListener("touchstart", (e) => { dragging = true; moverStick(e.touches[0]); });
-    joystick.addEventListener("touchmove", (e) => { if (dragging) moverStick(e.touches[0]); });
-    joystick.addEventListener("touchend", () => { dragging = false; dirX = 0; dirY = 0; stick.style.left = "35px"; stick.style.top = "35px"; });
 
     function moverStick(touch) {
       const rect = joystick.getBoundingClientRect();
@@ -118,7 +108,12 @@
       dirY = dy / 40;
     }
 
-    // Colisión
+    joystick.addEventListener("touchstart", (e) => { dragging = true; moverStick(e.touches[0]); iniciarAudio(); });
+    joystick.addEventListener("touchmove", (e) => { if (dragging) moverStick(e.touches[0]); });
+    joystick.addEventListener("touchend", () => { dragging = false; dirX = 0; dirY = 0; stick.style.left = "35px"; stick.style.top = "35px"; });
+
+    canvas.addEventListener("mousedown", iniciarAudio);
+
     function colision(j, o) {
       return !(j.x + j.size < o.x || j.x > o.x + o.width || j.y + j.size < o.y || j.y > o.y + o.height);
     }
@@ -168,19 +163,15 @@
       // Dibujar
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Obstáculos
       ctx.fillStyle = "red";
       obstaculos.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
 
-      // Enemigos
       ctx.fillStyle = "orange";
       enemigos.forEach(e => ctx.fillRect(e.x, e.y, e.size, e.size));
 
-      // Jugador
       ctx.fillStyle = `rgb(${r},0,255)`;
       ctx.fillRect(jugador.x, jugador.y, jugador.size, jugador.size);
 
-      // Puntaje y nivel
       ctx.fillStyle = "white";
       ctx.font = "20px Arial";
       ctx.fillText("Puntos: " + Math.floor(puntos), 10, 30);
