@@ -73,13 +73,24 @@
     let nivel = 1;
 
     // Sonidos
-    const sonidoFondo = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"); // fondo
+    const sonidoFondo = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
     sonidoFondo.loop = true;
     sonidoFondo.volume = 0.2;
-    sonidoFondo.play().catch(() => {}); // evitar bloqueo autoplay en móviles
 
-    const sonidoPerder = new Audio("https://www.soundjay.com/button/beep-07.mp3"); // al tocar enemigo
+    const sonidoPerder = new Audio("https://www.soundjay.com/button/beep-07.mp3");
     sonidoPerder.volume = 0.5;
+
+    let audioIniciado = false;
+    function iniciarAudio() {
+      if (!audioIniciado) {
+        sonidoFondo.play().catch(()=>{});
+        audioIniciado = true;
+      }
+    }
+
+    canvas.addEventListener("touchstart", iniciarAudio);
+    joystick.addEventListener("touchstart", iniciarAudio);
+    canvas.addEventListener("mousedown", iniciarAudio);
 
     // Joystick
     const joystick = document.getElementById("joystick");
