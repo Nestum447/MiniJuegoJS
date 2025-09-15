@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Juego con Joystick Virtual</title>
+  <title>Mini Juego Avanzado</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { 
@@ -39,7 +39,7 @@
   </style>
 </head>
 <body>
-  <h2 style="color:white;">🎮 Mini Juego con Joystick</h2>
+  <h2 style="color:white;">🎮 Mini Juego Avanzado</h2>
   <canvas id="gameCanvas" width="500" height="500"></canvas>
 
   <!-- Joystick Virtual -->
@@ -51,25 +51,42 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    // Jugador
     const jugador = { x: 200, y: 200, size: 50, velocidad: 3 };
+    let colorJugador = 0;
 
-    // Variables joystick
+    // Obstáculos
+    const obstaculos = [
+      { x: 100, y: 100, width: 100, height: 20 },
+      { x: 300, y: 250, width: 50, height: 150 },
+      { x: 150, y: 350, width: 200, height: 20 }
+    ];
+
+    // Enemigos
+    const enemigos = [
+      { x: 50, y: 50, size: 40, velocidad: 2, dirX: 1, dirY: 1 },
+      { x: 400, y: 150, size: 50, velocidad: 1.5, dirX: -1, dirY: 1 }
+    ];
+
+    // Puntos
+    let puntos = 0;
+    let nivel = 1;
+
+    // Joystick
     const joystick = document.getElementById("joystick");
     const stick = document.getElementById("stick");
-    const center = { x: 60, y: 60 }; // centro del joystick
+    const center = { x: 60, y: 60 };
     let dragging = false;
     let dirX = 0, dirY = 0;
 
-    // Eventos táctiles
+    // Eventos joystick
     joystick.addEventListener("touchstart", (e) => {
       dragging = true;
       moverStick(e.touches[0]);
     });
-
     joystick.addEventListener("touchmove", (e) => {
       if (dragging) moverStick(e.touches[0]);
     });
-
     joystick.addEventListener("touchend", () => {
       dragging = false;
       dirX = 0; dirY = 0;
@@ -81,40 +98,79 @@
       const rect = joystick.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
-
-      // Vector desde el centro
       let dx = x - center.x;
       let dy = y - center.y;
       const distancia = Math.sqrt(dx*dx + dy*dy);
-
-      // Normalizar movimiento
-      if (distancia > 40) {
-        dx = (dx / distancia) * 40;
-        dy = (dy / distancia) * 40;
-      }
-
+      if (distancia > 40) { dx = (dx / distancia) * 40; dy = (dy / distancia) * 40; }
       stick.style.left = (center.x - 25 + dx) + "px";
       stick.style.top = (center.y - 25 + dy) + "px";
-
       dirX = dx / 40;
       dirY = dy / 40;
     }
 
-    // Game loop
-    function gameLoop() {
-      jugador.x += dirX * jugador.velocidad;
-      jugador.y += dirY * jugador.velocidad;
+    // Colisión jugador-obstáculo
+    function colision(j, o) {
+      return !(
+        j.x + j.size < o.x ||
+        j.x > o.x + o.width ||
+        j.y + j.size < o.y ||
+        j.y > o.y + o.height
+      );
+    }
 
-      // Límites
+    function gameLoop() {
+      // Movimiento jugador
+      const jugadorTemp = { ...jugador };
+      jugadorTemp.x += dirX * jugador.velocidad;
+      jugadorTemp.y += dirY * jugador.velocidad;
+
+      let chocó = false;
+      obstaculos.forEach(o => { if (colision(jugadorTemp, o)) chocó = true; });
+      if (!chocó) { jugador.x = jugadorTemp.x; jugador.y = jugadorTemp.y; }
+
+      // Limites
       if (jugador.x < 0) jugador.x = 0;
       if (jugador.x > canvas.width - jugador.size) jugador.x = canvas.width - jugador.size;
       if (jugador.y < 0) jugador.y = 0;
       if (jugador.y > canvas.height - jugador.size) jugador.y = canvas.height - jugador.size;
 
+      // Animación jugador
+      colorJugador += 0.05;
+      const r = Math.floor(100 + 155 * Math.abs(Math.sin(colorJugador)));
+
+      // Movimiento enemigos
+      enemigos.forEach(e => {
+        e.x += e.dirX * e.velocidad;
+        e.y += e.dirY * e.velocidad;
+        if (e.x < 0 || e.x > canvas.width - e.size) e.dirX *= -1;
+        if (e.y < 0 || e.y > canvas.height - e.size) e.dirY *= -1;
+        if (colision(jugador, e)) { puntos = 0; nivel = 1; } // toca enemigo -> reinicia puntos
+      });
+
+      // Incrementar puntos con movimiento
+      puntos += 0.01;
+      if (puntos >= nivel * 20) nivel++; // sube nivel cada 20 puntos
+
       // Dibujar
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "blue";
+
+      // Obstáculos
+      ctx.fillStyle = "red";
+      obstaculos.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
+
+      // Enemigos
+      ctx.fillStyle = "orange";
+      enemigos.forEach(e => ctx.fillRect(e.x, e.y, e.size, e.size));
+
+      // Jugador
+      ctx.fillStyle = `rgb(${r},0,255)`;
       ctx.fillRect(jugador.x, jugador.y, jugador.size, jugador.size);
+
+      // Puntaje y nivel
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("Puntos: " + Math.floor(puntos), 10, 30);
+      ctx.fillText("Nivel: " + nivel, 10, 60);
 
       requestAnimationFrame(gameLoop);
     }
